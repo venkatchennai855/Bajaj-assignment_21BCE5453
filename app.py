@@ -3,16 +3,23 @@ import string
 
 app = Flask(__name__)
 
-@app.route('/process', methods=['GET', 'POST'])
-def process():
-    if request.method == 'POST':
-        data = request.json
-
+@app.route('/bfhl', methods=['POST'])
+def bfhl_post():
+    try:
         # Extract data from the request
-        user_id = data.get('user_id')
+        data = request.json
+        full_name = data.get('full_name')
+        dob = data.get('dob')  # Expected format: 'ddmmyyyy'
         college_email = data.get('college_email')
         college_roll_number = data.get('college_roll_number')
         input_string = data.get('input_string', '')
+
+        # Validate input
+        if not full_name or not dob or not college_email or not college_roll_number:
+            return jsonify({"is_success": False, "message": "Invalid input"}), 400
+
+        # Construct user_id in the format full_name_ddmmyyyy
+        user_id = f"{full_name.replace(' ', '_').lower()}_{dob}"
 
         # Create arrays for numbers and alphabets
         numbers = [char for char in input_string if char.isdigit()]
@@ -24,19 +31,26 @@ def process():
 
         # Construct the response
         response = {
-            'status': 'success',
-            'user_id': user_id,
-            'college_email': college_email,
-            'college_roll_number': college_roll_number,
-            'numbers': numbers,
-            'alphabets': alphabets,
-            'highest_lowercase': highest_lowercase
+            "is_success": True,
+            "user_id": user_id,
+            "college_email": college_email,
+            "college_roll_number": college_roll_number,
+            "numbers": numbers,
+            "alphabets": alphabets,
+            "highest_lowercase": highest_lowercase
         }
-        return jsonify(response)
+        return jsonify(response), 200
 
-    elif request.method == 'GET':
+    except Exception as e:
+        return jsonify({"is_success": False, "message": str(e)}), 500
+
+@app.route('/bfhl', methods=['GET'])
+def bfhl_get():
+    try:
         # Return a simple operation code
-        return jsonify({'operation_code': 200})
+        return jsonify({"operation_code": 1}), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
